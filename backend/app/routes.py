@@ -54,7 +54,17 @@ def register_routes(app):
         f = request.files.get('file')
         if not f:
             return jsonify({'error': 'file missing'}), 400
+        
         import pandas as pd
+        from .models import User
+        
+        # Ensure default user exists
+        user = User.query.filter_by(id=1).first()
+        if not user:
+            user = User(id=1, email='admin@example.com', name='Default User')
+            db.session.add(user)
+            db.session.commit()
+        
         df = pd.read_csv(f)
         p = Portfolio(user_id=1, name='groww-import', source='groww')
         db.session.add(p)
@@ -79,6 +89,18 @@ def register_routes(app):
         hs = Holding.query.all()
         out = [{'symbol': h.symbol, 'qty': float(h.quantity or 0), 'avg': float(h.avg_price or 0)} for h in hs]
         return jsonify(out)
+
+    @app.route('/clear-portfolio', methods=['POST'])
+    def clear_portfolio():
+        try:
+            # Delete all holdings and portfolios
+            Holding.query.delete()
+            Portfolio.query.delete()
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': 'Portfolio cleared successfully'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
     @app.route('/api/chart/<symbol>')
     def get_chart_data(symbol):
@@ -139,3 +161,41 @@ def register_routes(app):
             })
         
         return jsonify(data)
+
+    @app.route('/api/portfolio-analytics')
+    def portfolio_analytics():
+        """Get portfolio analytics data for charts and analysis"""
+        hs = Holding.query.all()
+        
+        # Calculate portfolio metrics
+        total_value = sum(float(h.quantity or 0) * float(h.avg_price or 0) for h in hs)
+        total_stocks = len(hs)
+        
+        # Portfolio composition data for pie chart
+        composition = []
+        for h in hs:
+            value = float(h.quantity or 0) * float(h.avg_price or 0)
+            composition.append({
+                'symbol': h.symbol,
+                'quantity': float(h.quantity or 0),
+                'avg_price': float(h.avg_price or 0),
+                'value': value,
+                'percentage': (value / total_value * 100) if total_value > 0 else 0
+            })
+        
+        # Sort by value descending
+        composition.sort(key=lambda x: x['value'], reverse=True)
+        
+        return jsonify({
+            'total_value': total_value,
+            'total_stocks': total_stocks,
+            'composition': composition,
+            'top_holdings': composition[:10]  # Top 10 holdings
+        })
+
+    @app.route('/api/portfolio-symbols')
+    def portfolio_symbols():
+        """Get all symbols in the portfolio for dropdowns"""
+        hs = Holding.query.all()
+        symbols = [{'value': h.symbol, 'label': h.symbol} for h in hs]
+        return jsonify(symbols)

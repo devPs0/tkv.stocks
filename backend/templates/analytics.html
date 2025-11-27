@@ -13,6 +13,76 @@
     </div>
 </div>
 
+<!-- Portfolio Overview Cards -->
+<div class="grid grid-3" style="margin-bottom: 2rem;">
+    <div class="card stat-card">
+        <span class="stat-value" id="portfolio-value">Loading...</span>
+        <span class="stat-label">Total Portfolio Value</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value" id="portfolio-stocks">Loading...</span>
+        <span class="stat-label">Total Stocks</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value" id="avg-position">Loading...</span>
+        <span class="stat-label">Average Position Size</span>
+    </div>
+</div>
+
+<!-- Portfolio Composition Chart -->
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-pie-chart"></i>
+                Portfolio Composition
+            </h3>
+        </div>
+        <canvas id="portfolioCompositionChart" width="400" height="400"></canvas>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-list"></i>
+                Top Holdings
+            </h3>
+        </div>
+        <div id="top-holdings-list">
+            <div class="loading-spinner">Loading holdings...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Holdings Table -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-table"></i>
+            All Holdings
+        </h3>
+    </div>
+    <div class="table-container">
+        <table class="table" id="holdings-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Quantity</th>
+                    <th>Avg Price</th>
+                    <th>Investment Value</th>
+                    <th>Portfolio %</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="holdings-table-body">
+                <tr>
+                    <td colspan="6" class="text-center">Loading holdings...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="card" style="margin-bottom: 2rem;">
     <div class="card-header">
         <h3 class="card-title">
@@ -22,18 +92,14 @@
     </div>
     <div class="grid grid-2">
         <div class="form-group">
-            <label class="form-label">Select Stock</label>
+            <label class="form-label">Select Stock from Portfolio</label>
             <select id="analysis-symbol" class="form-input">
                 <option value="">Choose a stock...</option>
-                <option value="TCS.NS">TCS.NS - Tata Consultancy Services</option>
-                <option value="RELIANCE.NS">RELIANCE.NS - Reliance Industries</option>
-                <option value="INFY.NS">INFY.NS - Infosys</option>
-                <option value="HDFCBANK.NS">HDFCBANK.NS - HDFC Bank</option>
             </select>
         </div>
         <div class="form-group">
             <label class="form-label">Analysis Period</label>
-            <select class="form-input">
+            <select id="analysis-period" class="form-input">
                 <option value="1M">1 Month</option>
                 <option value="3M">3 Months</option>
                 <option value="6M" selected>6 Months</option>
@@ -351,218 +417,57 @@
     font-weight: 600;
 }
 </style>
+<style>
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.holding-item:last-child {
+    border-bottom: none !important;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+#portfolioCompositionChart {
+    max-height: 400px;
+}
+</style>
+
 {% endblock %}
 
 {% block scripts %}
-<script>
-function loadAnalysis() {
-    const symbol = document.getElementById('analysis-symbol').value;
-    if (!symbol) {
-        window.stockPredictor.showError('Please select a stock symbol');
-        return;
-    }
-    
-    window.stockPredictor.showLoading(`Loading analysis for ${symbol}...`);
-    
-    // Simulate loading chart
-    document.getElementById('price-chart').innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--secondary);">
-            <div style="text-align: center;">
-                <span class="loading"></span>
-                <p>Loading price chart for ${symbol}...</p>
-            </div>
-        </div>
-    `;
-    
-    // Simulate loading indicators
-    setTimeout(() => {
-        loadTechnicalIndicators(symbol);
-        loadPriceChart(symbol);
-        window.stockPredictor.showSuccess(`Analysis loaded for ${symbol}`);
-    }, 2000);
-}
-
-function loadTechnicalIndicators(symbol) {
-    // Simulate technical indicators
-    const indicators = {
-        'RSI (14)': '65.4',
-        'MACD': '12.5',
-        'SMA (20)': '₹3,456',
-        'EMA (50)': '₹3,423',
-        'Bollinger Bands': '₹3,400-₹3,500',
-        'Volume SMA': '2.5M'
-    };
-    
-    const container = document.getElementById('technical-indicators');
-    container.innerHTML = `
-        <div class="indicator-grid">
-            ${Object.entries(indicators).map(([label, value]) => `
-                <div class="indicator-item">
-                    <span class="indicator-label">${label}</span>
-                    <span class="indicator-value">${value}</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-async function loadPriceChart(symbol) {
-    try {
-        // Show loading state
-        document.getElementById('price-chart').innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; height: 300px; color: var(--secondary);">
-                <div style="text-align: center;">
-                    <span class="loading"></span>
-                    <p>Loading chart for ${symbol}...</p>
-                </div>
-            </div>
-        `;
-
-        // Fetch chart data
-        const response = await fetch(`${window.location.origin}/api/chart/${symbol}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load chart data');
-        }
-
-        // Create canvas for chart
-        document.getElementById('price-chart').innerHTML = `
-            <canvas id="priceCanvas" width="400" height="200"></canvas>
-        `;
-
-        // Create Chart.js chart
-        const ctx = document.getElementById('priceCanvas').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: `${symbol} Close Price`,
-                    data: data.prices,
-                    borderColor: 'rgb(220, 38, 38)',
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: 10
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `${symbol} Price Chart (${data.count} days)`,
-                        color: '#ffffff'
-                    },
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value.toFixed(2);
-                            },
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxTicksLimit: 10,
-                            color: '#ffffff'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
-            }
-        });
-
-    } catch (error) {
-        document.getElementById('price-chart').innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; height: 300px; color: var(--danger);">
-                <div style="text-align: center;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <p><strong>Error loading chart</strong></p>
-                    <small>${error.message}</small>
-                </div>
-            </div>
-        `;
-    }
-}
-
-function generatePredictions() {
-    const symbol = document.getElementById('analysis-symbol').value;
-    if (!symbol) {
-        window.stockPredictor.showError('Please select a stock symbol first');
-        return;
-    }
-    
-    window.stockPredictor.showLoading('Generating AI predictions...');
-    
-    // Simulate prediction generation
-    setTimeout(() => {
-        const predictions = [
-            { period: 'Next Day Prediction', price: '₹3,467', change: '+0.8%', confidence: '89%' },
-            { period: '1 Week Forecast', price: '₹3,523', change: '+2.4%', confidence: '76%' },
-            { period: '1 Month Outlook', price: '₹3,678', change: '+6.8%', confidence: '64%' }
-        ];
-        
-        const cards = document.querySelectorAll('.prediction-card');
-        cards.forEach((card, index) => {
-            const pred = predictions[index];
-            card.querySelector('.price').textContent = pred.price;
-            card.querySelector('.change').textContent = pred.change;
-            card.querySelector('small').textContent = `Confidence: ${pred.confidence}`;
-        });
-        
-        // Update performance metrics
-        updatePerformanceMetrics();
-        
-        window.stockPredictor.showSuccess('Predictions generated successfully');
-    }, 3000);
-}
-
-function trainModel() {
-    window.stockPredictor.showLoading('Training new model... This may take a few minutes.');
-    
-    // Simulate model training
-    setTimeout(() => {
-        window.stockPredictor.showSuccess('Model training completed successfully');
-        updatePerformanceMetrics();
-    }, 5000);
-}
-
-function updatePerformanceMetrics() {
-    const metrics = [
-        { label: 'Accuracy', value: 87 },
-        { label: 'Precision', value: 84 },
-        { label: 'Recall', value: 91 }
-    ];
-    
-    const items = document.querySelectorAll('.metric-item');
-    items.forEach((item, index) => {
-        const fill = item.querySelector('.metric-fill');
-        const valueSpan = item.querySelector('.metric-value');
-        
-        fill.style.width = `${metrics[index].value}%`;
-        valueSpan.textContent = `${metrics[index].value}%`;
-    });
-}
-</script>
 {% endblock %}

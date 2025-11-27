@@ -202,13 +202,6 @@ function exportPortfolio() {
         });
 }
 
-function clearPortfolio() {
-    if (confirm('Are you sure you want to clear all holdings? This action cannot be undone.')) {
-        // Implementation would need a backend endpoint
-        window.stockPredictor.showError('Clear portfolio feature not implemented yet');
-    }
-}
-
 // Handle manual entry form
 document.getElementById('manual-entry-form').addEventListener('submit', async (e) => {
     e.preventDefault();
